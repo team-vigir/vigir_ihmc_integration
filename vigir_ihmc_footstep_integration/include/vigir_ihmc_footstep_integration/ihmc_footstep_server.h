@@ -4,6 +4,7 @@
 #include <ros/ros.h>
 #include <vigir_footstep_planning_msgs/ExecuteStepPlanAction.h>
 #include <ihmc_msgs/FootstepDataListMessage.h>
+#include <ihmc_msgs/FootstepStatusMessage.h>
 #include <actionlib/server/simple_action_server.h>
 
 namespace ihmc_integration {
@@ -18,14 +19,25 @@ private:
     bool stepPlanToIHCMMsg(const vigir_footstep_planning_msgs::StepPlan& step_plan, ihmc_msgs::FootstepDataListMessage& ihmc_msg);
     void stepToIHCMMsg(const vigir_footstep_planning_msgs::Step& step, ihmc_msgs::FootstepDataMessage& foot_data);
 
+    void statusCB(const ihmc_msgs::FootstepStatusMessageConstPtr& status_ptr);
+
     ros::NodeHandle node_;
     ros::Publisher foot_pose_pub_;
+    ros::Subscriber status_sub_;
 
     unsigned int current_step_index_;
     unsigned int target_step_index_;
 };
 
 }
+
+/*
+ * TODO:
+ * 0. Add timeout if controller doesn't respond & remove blocking while statement
+ * 1. Stop current step plan (by receiving an empty step plan)
+ * 2. Stitch two plans
+ * 3. Add constants IHMC message
+ */
 
 
 

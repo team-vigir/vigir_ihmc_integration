@@ -12,6 +12,7 @@ IHMCFootstepServer::IHMCFootstepServer(const ros::NodeHandle &node, const std::s
 void IHMCFootstepServer::start() {
     server_.start();
     foot_pose_pub_ = node_.advertise<ihmc_msgs::FootstepDataListMessage>("/atlas/inputs/ihmc_msgs/FootstepDataListMessage", 1000, false);
+    status_sub_ = node_.subscribe("/atlas/outputs/ihmc_msgs/FootstepStatusMessage", 1000, &IHMCFootstepServer::statusCB, this);
 }
 
 void IHMCFootstepServer::goalCB(const vigir_footstep_planning_msgs::ExecuteStepPlanGoalConstPtr &goal_ptr) {
@@ -19,11 +20,33 @@ void IHMCFootstepServer::goalCB(const vigir_footstep_planning_msgs::ExecuteStepP
     ihmc_msgs::FootstepDataListMessage ihmc_msg;
     if (stepPlanToIHCMMsg(goal_ptr->step_plan, ihmc_msg)) {
         foot_pose_pub_.publish(ihmc_msg);
-        server_.setSucceeded();
         ROS_INFO_STREAM("Successfully sent step plan.");
+
+        bool success = false;
+        ros::Rate loop_rate(100);
+        while (!success)  {
+            if (current_step_index_ == target_step_index_) {
+                success = true;
+                ROS_INFO_STREAM("Finished current step plan.");
+            }
+            vigir_footstep_planning_msgs::ExecuteStepPlanFeedback feedback;
+            feedback.current_step_index = current_step_index_;
+            feedback.stepping_status = vigir_footstep_planning_msgs::FootstepExecutionStatus::EXECUTING_STEP_PLAN;
+            server_.publishFeedback(feedback);
+            ros::spinOnce();
+            loop_rate.sleep();
+        }
+
+        vigir_footstep_planning_msgs::ExecuteStepPlanResult result;
+        result.status.status = vigir_footstep_planning_msgs::FootstepExecutionStatus::REACHED_GOAL;
+        result.status.header.stamp = ros::Time::now();
+        server_.setSucceeded();
     } else {
         ROS_ERROR_STREAM("Step plan was aborted. Size needs to be at least 1.");
-        server_.setAborted();
+        vigir_footstep_planning_msgs::ExecuteStepPlanResult result;
+        result.status.status = vigir_footstep_planning_msgs::FootstepExecutionStatus::ERR_EMPTY_PLAN;
+        result.status.header.stamp = ros::Time::now();
+        server_.setAborted(result);
     }
 }
 
@@ -31,7 +54,7 @@ bool IHMCFootstepServer::stepPlanToIHCMMsg(const vigir_footstep_planning_msgs::S
     if (step_plan.steps.size() < 1) { // Need at least 1 step
         return false;
     }
-    ihmc_msg.footstepDataList.resize(step_plan.steps.size());
+    ihmc_msg.footstepDataList.resize(step_plan.steps.size()-1);
     ihmc_msg.swingTime = 1.5;
     ihmc_msg.transferTime = 1.5;
     ihmc_msg.trajectoryWaypointGenerationMethod = 0; // 0=Default, 1=BY_BOX, 2=STEP_ON_OR_OFF, 3=NO_STEP, 4=LOW_HEIGHT
@@ -39,8 +62,9 @@ bool IHMCFootstepServer::stepPlanToIHCMMsg(const vigir_footstep_planning_msgs::S
     for (unsigned int i = 1; i < step_plan.steps.size(); i++) {
         ihmc_msgs::FootstepDataMessage foot_data;
         stepToIHCMMsg(step_plan.steps[i], foot_data);
-        ihmc_msg.footstepDataList[i] = foot_data;
+        ihmc_msg.footstepDataList[i-1] = foot_data;
     }
+    current_step_index_ = 0;
     target_step_index_ = step_plan.steps[step_plan.steps.size()-1].step_index;
     return true;
 }
@@ -51,6 +75,13 @@ void IHMCFootstepServer::stepToIHCMMsg(const vigir_footstep_planning_msgs::Step&
     foot_data.location.y = step.foot.pose.position.y;
     foot_data.location.z = step.foot.pose.position.z;
     foot_data.orientation = step.foot.pose.orientation;
+}
+
+void IHMCFootstepServer::statusCB(const ihmc_msgs::FootstepStatusMessageConstPtr& status_ptr) {
+    if (status_ptr->status == 1) {
+        current_step_index_++;
+        ROS_INFO_STREAM("Current step index: " << current_step_index_);
+    }
 }
 
 }
