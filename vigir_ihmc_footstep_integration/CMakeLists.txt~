@@ -6,12 +6,13 @@ project(vigir_ihmc_footstep_integration)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   actionlib
+  actionlib_msgs
   ihmc_msgs
   vigir_footstep_planning_msgs
 )
 
 ## System dependencies are found with CMake's conventions
-# find_package(Boost REQUIRED COMPONENTS system)
+find_package(Boost REQUIRED COMPONENTS system)
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -92,6 +93,7 @@ catkin_package(
   LIBRARIES vigir_ihmc_footstep_integration
   CATKIN_DEPENDS 
     actionlib 
+    actionlib_msgs
     ihmc_msgs 
     vigir_footstep_planning_msgs
 #  DEPENDS system_lib
@@ -105,26 +107,30 @@ catkin_package(
 ## Your package locations should be listed before other locations
 # include_directories(include)
 include_directories(
+  include
+  ${Boost_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS}
 )
 
 ## Declare a cpp library
-add_library(vigir_ihmc_footstep_integration
+add_library(${PROJECT_NAME}
   ${HEADERS}
   ${SOURCES}
 )
 
 ## Declare a cpp executable
-add_executable(ihmc_footstep_node src/ihmc_footstep_node.cpp)
+add_executable(ihmc_footstep_node src/ihmc_footstep_node.cpp ${SOURCES})
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
-# add_dependencies(vigir_ihmc_footstep_integration_node vigir_ihmc_footstep_integration_generate_messages_cpp)
+# add_dependencies(ihmc_footstep_server ${catkin_EXPORTED_TARGETS})
+# add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(vigir_ihmc_footstep_integration_node
-#   ${catkin_LIBRARIES}
-# )
+target_link_libraries(ihmc_footstep_node
+   ${PROJECT_NAME}
+   ${catkin_LIBRARIES}
+)
 
 #############
 ## Install ##
