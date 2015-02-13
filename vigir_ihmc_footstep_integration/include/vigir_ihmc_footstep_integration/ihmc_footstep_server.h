@@ -12,6 +12,7 @@ namespace ihmc_integration {
 class IHMCFootstepServer {
 public:
     IHMCFootstepServer(const ros::NodeHandle& node, const std::string& server_name);
+    bool loadConfig(const ros::NodeHandle& config_node);
     void start();
 private:
     actionlib::SimpleActionServer<vigir_footstep_planning_msgs::ExecuteStepPlanAction> server_;
@@ -27,6 +28,14 @@ private:
 
     unsigned int current_step_index_;
     unsigned int target_step_index_;
+
+    // Config
+    double swing_time_;
+    double transfer_time_;
+    int traj_waypoint_gen_method_;
+    double timeout_factor_;
+    std::string ihmc_pub_topic_;
+    std::string ihmc_status_topic_;
 };
 
 }

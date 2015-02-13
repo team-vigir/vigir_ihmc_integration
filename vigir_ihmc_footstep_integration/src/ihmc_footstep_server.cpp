@@ -9,6 +9,17 @@ IHMCFootstepServer::IHMCFootstepServer(const ros::NodeHandle &node, const std::s
     target_step_index_(0){
 }
 
+bool IHMCFootstepServer::loadConfig(const ros::NodeHandle& config_node) {
+    bool success = true;
+    success = success && config_node.getParam("swing_time", swing_time_);
+    success = success && config_node.getParam("transfer_time", transfer_time_);
+    success = success && config_node.getParam("traj_waypoint_gen_method", traj_waypoint_gen_method_);
+    success = success && config_node.getParam("timeout_factor", timeout_factor_);
+    success = success && config_node.getParam("ihmc_pub_topic", ihmc_pub_topic_);
+    success = success && config_node.getParam("ihmc_status_topic", ihmc_status_topic_);
+    return success;
+}
+
 void IHMCFootstepServer::start() {
     server_.start();
     foot_pose_pub_ = node_.advertise<ihmc_msgs::FootstepDataListMessage>("/atlas/inputs/ihmc_msgs/FootstepDataListMessage", 1000, false);
