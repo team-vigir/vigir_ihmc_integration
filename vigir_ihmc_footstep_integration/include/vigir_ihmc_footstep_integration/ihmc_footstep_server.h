@@ -12,17 +12,20 @@ namespace ihmc_integration {
 class IHMCFootstepServer {
 public:
     IHMCFootstepServer(const ros::NodeHandle& node, const std::string& server_name);
+    std::string getNamespace();
     bool loadConfig(const ros::NodeHandle& config_node);
     void start();
 private:
     actionlib::SimpleActionServer<vigir_footstep_planning_msgs::ExecuteStepPlanAction> server_;
     void goalCB(const vigir_footstep_planning_msgs::ExecuteStepPlanGoalConstPtr& goal_ptr);
-    bool stepPlanToIHCMMsg(const vigir_footstep_planning_msgs::StepPlan& step_plan, ihmc_msgs::FootstepDataListMessage& ihmc_msg);
-    void stepToIHCMMsg(const vigir_footstep_planning_msgs::Step& step, ihmc_msgs::FootstepDataMessage& foot_data);
+    bool stepPlanToIHMCMsg(const vigir_footstep_planning_msgs::StepPlan& step_plan, ihmc_msgs::FootstepDataListMessage& ihmc_msg);
+    void stepToIHMCMsg(const vigir_footstep_planning_msgs::Step& step, ihmc_msgs::FootstepDataMessage& foot_data);
 
     void statusCB(const ihmc_msgs::FootstepStatusMessageConstPtr& status_ptr);
 
     ros::NodeHandle node_;
+    std::string name_;
+
     ros::Publisher foot_pose_pub_;
     ros::Subscriber status_sub_;
 
@@ -42,7 +45,7 @@ private:
 
 /*
  * TODO:
- * 0. Add timeout if controller doesn't respond & remove blocking while statement
+ * 0. Add timeout if controller doesn't respond
  * 1. Stop current step plan (by receiving an empty step plan)
  * 2. Stitch two plans
  * 3. Add constants IHMC message
