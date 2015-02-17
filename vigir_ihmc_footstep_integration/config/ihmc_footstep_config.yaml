@@ -1,4 +1,6 @@
 ihmc_footstep_config:
+  namespace: "/"
+  name: "ihmc_footstep_server"
   swing_time: 1.5               # single-support time
   transfer_time: 1.5            # double-support time
   traj_waypoint_gen_method: 0   # 0=Default, 1=BY_BOX, 2=STEP_ON_OR_OFF, 3=NO_STEP, 4=LOW_HEIGHT
@@ -6,3 +8,4 @@ ihmc_footstep_config:
 
   ihmc_pub_topic: "/atlas/inputs/ihmc_msgs/FootstepDataListMessage" # Topic on which step plan is published
   ihmc_status_topic: "/atlas/outputs/ihmc_msgs/FootstepStatusMessage" # Topic on which status feedback is given
+  ihmc_stop_topic: "/atlas/inputs/ihmc_msgs/PauseCommandMessage" # Stops the current footstep plan in a safe state
