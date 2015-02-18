@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
 <launch>
-  <rosparam file="$(find vigir_ihmc_footstep_integration)/config/ihmc_footstep_config.yaml" command="load"/>
+  <rosparam file="$(find vigir_ihmc_footstep_integration)/config/vigir_footstep_config.yaml" command="load"/>
   <node name="ihmc_footstep_server" pkg="vigir_ihmc_footstep_integration" type="ihmc_footstep_node" respawn="false" output="screen"/>
 </launch>

@@ -4,7 +4,7 @@ namespace ihmc_integration {
 
 IHMCFootstepServer::IHMCFootstepServer(const ros::NodeHandle &node, const std::string &server_name)
   : //server_(node, server_name,boost::bind(&IHMCFootstepServer::executeCB, this, _1),  false),
-    server_(node, server_name, false),
+    server_(node, server_name, boost::bind(&IHMCFootstepServer::goalCB, this, _1), boost::bind(&IHMCFootstepServer::preemptCB, this, _1), false),
     node_(node),
     name_(server_name),
     current_step_index_(0),
@@ -17,8 +17,7 @@ IHMCFootstepServer::IHMCFootstepServer(const ros::NodeHandle &node, const std::s
     ihmc_status_topic_("/atlas/outputs/ihmc_msgs/FootstepStatusMessage"),
     ihmc_stop_topic_("/atlas/inputs/ihmc_msgs/PauseCommandMessage")
 {
-    server_.registerGoalCallback(boost::bind(&IHMCFootstepServer::goalCB, this));
-    server_.registerPreemptCallback(boost::bind(&IHMCFootstepServer::preemptCB, this));
+    step_list_.resize(0);
 }
 
 std::string IHMCFootstepServer::getNamespace() {
@@ -44,97 +43,66 @@ void IHMCFootstepServer::start() {
     status_sub_ = node_.subscribe(ihmc_status_topic_, 1000, &IHMCFootstepServer::statusCB, this);
 }
 
-void IHMCFootstepServer::goalCB() {
+bool IHMCFootstepServer::goalIsActive() {
+ return current_goal_.isValid() && current_goal_.getGoalStatus().status == actionlib_msgs::GoalStatus::ACTIVE;
+}
+
+void IHMCFootstepServer::goalCB(FootstepServer::GoalHandle goal_handle) {
     ROS_INFO_STREAM("New goal received.");
-    if (!server_.isActive()) {
-        sendStepPlan(server_.acceptNewGoal()->step_plan);
+    if (!goalIsActive()) {
+        goal_handle.setAccepted();
+        current_goal_ = goal_handle;
+        step_list_.clear();
+        current_step_index_ = 0;
+        sendStepPlan(current_goal_.getGoal()->step_plan);
     } else {
-        ROS_INFO_STREAM("Ignoring goal since another goal is active.");
+        preemptWithoutStop("Append new goal");
+        goal_handle.setAccepted();
+        current_goal_ = goal_handle;
+        sendStepPlan(current_goal_.getGoal()->step_plan);
     }
 }
 
-void IHMCFootstepServer::preemptCB() {
+void IHMCFootstepServer::preemptCB(FootstepServer::GoalHandle goal_handle) {
     setPreempted("Stopped by user.");
 }
 
 void IHMCFootstepServer::sendStepPlan(const vigir_footstep_planning_msgs::StepPlan &step_plan) {
+    if (step_plan.steps[step_plan.steps.size()-1].step_index+1 > step_list_.size()) {
+        step_list_.resize(step_plan.steps[step_plan.steps.size()-1].step_index+1);
+        target_step_index_ = step_list_.size() -1;
+    }
+    for (unsigned int i = 0; i < step_plan.steps.size(); i++) {
+        step_list_[step_plan.steps[i].step_index] = step_plan.steps[i];
+    }
     ihmc_msgs::FootstepDataListMessage ihmc_msg;
-    if (stepPlanToIHMCMsg(step_plan, ihmc_msg)) {
-        // Reset counter
-        current_step_index_ = 0;
-        target_step_index_ = step_plan.steps[step_plan.steps.size()-1].step_index;
+    if (stepListToIHMCMsg(ihmc_msg)) {
         // Publish plan
         foot_pose_pub_.publish(ihmc_msg);
-        ROS_INFO_STREAM("Successfully sent step plan.");
+        ROS_INFO_STREAM("Successfully sent step plan from " << current_step_index_+1 << " to " << target_step_index_ << ".");
     } else {
         setAborted("Step plan empty/invalid.");
     }
 }
 
-/* Deprecated */
-void IHMCFootstepServer::executeCB(const vigir_footstep_planning_msgs::ExecuteStepPlanGoalConstPtr &goal_ptr) {
-    ROS_INFO_STREAM("Received new goal !!");
-    if (goal_ptr->step_plan.steps.size() == 0) {
-        ROS_INFO_STREAM("Stopping current plan.");
-        sendStopMsg();
-        vigir_footstep_planning_msgs::ExecuteStepPlanResult result;
-        result.status.status = vigir_footstep_planning_msgs::FootstepExecutionStatus::REACHED_GOAL;
-        result.status.header.stamp = ros::Time::now();
-        server_.setSucceeded(result);
-    }
-    ihmc_msgs::FootstepDataListMessage ihmc_msg;
-    if (stepPlanToIHMCMsg(goal_ptr->step_plan, ihmc_msg)) {
-        foot_pose_pub_.publish(ihmc_msg);
-        ROS_INFO_STREAM("Successfully sent step plan.");
+void IHMCFootstepServer::sendStepList() {
 
-        bool success = false;
-        ros::Rate loop_rate(100);
-        while (ros::ok() && !success)  {
-            if (current_step_index_ == target_step_index_) {
-                success = true;
-                ROS_INFO_STREAM("Finished current step plan.");
-            }
-            vigir_footstep_planning_msgs::ExecuteStepPlanFeedback feedback;
-            feedback.current_step_index = current_step_index_;
-            feedback.stepping_status = vigir_footstep_planning_msgs::FootstepExecutionStatus::EXECUTING_STEP_PLAN;
-            server_.publishFeedback(feedback);
-            ros::spinOnce();
-            loop_rate.sleep();
-        }
-        if (ros::ok()) {
-            vigir_footstep_planning_msgs::ExecuteStepPlanResult result;
-            result.status.status = vigir_footstep_planning_msgs::FootstepExecutionStatus::REACHED_GOAL;
-            result.status.header.stamp = ros::Time::now();
-            server_.setSucceeded(result);
-        } else {
-            std::cout << "Server terminated. Aborting plan." << std::endl;
-            vigir_footstep_planning_msgs::ExecuteStepPlanResult result;
-            result.status.status = vigir_footstep_planning_msgs::FootstepExecutionStatus::PREMATURE_HALT;
-            result.status.header.stamp = ros::Time::now();
-            server_.setAborted(result);
-        }
-    } else {
-        ROS_ERROR_STREAM("Step plan was aborted. Size needs to be at least 1.");
-        vigir_footstep_planning_msgs::ExecuteStepPlanResult result;
-        result.status.status = vigir_footstep_planning_msgs::FootstepExecutionStatus::ERR_EMPTY_PLAN;
-        result.status.header.stamp = ros::Time::now();
-        server_.setAborted(result);
-    }
 }
 
-bool IHMCFootstepServer::stepPlanToIHMCMsg(const vigir_footstep_planning_msgs::StepPlan& step_plan, ihmc_msgs::FootstepDataListMessage& ihmc_msg) {
-    if (step_plan.steps.size() < 1) { // Need at least 1 step
+
+bool IHMCFootstepServer::stepListToIHMCMsg(ihmc_msgs::FootstepDataListMessage& ihmc_msg) {
+    if (step_list_.empty()) { // Need at least 1 step
         return false;
     }
-    ihmc_msg.footstepDataList.resize(step_plan.steps.size()-1);
+    ihmc_msg.footstepDataList.resize(step_list_.size()-1-current_step_index_);
     ihmc_msg.swingTime = swing_time_;
     ihmc_msg.transferTime = transfer_time_;
     ihmc_msg.trajectoryWaypointGenerationMethod = traj_waypoint_gen_method_; // 0=Default, 1=BY_BOX, 2=STEP_ON_OR_OFF, 3=NO_STEP, 4=LOW_HEIGHT
 //    ihmc_msg.trajectoryBoxData --- only needed if generation is 'BY BOX' id=1
-    for (unsigned int i = 1; i < step_plan.steps.size(); i++) {
+    for (unsigned int i = current_step_index_+1; i < step_list_.size(); i++) {
         ihmc_msgs::FootstepDataMessage foot_data;
-        stepToIHMCMsg(step_plan.steps[i], foot_data);
-        ihmc_msg.footstepDataList[i-1] = foot_data;
+        stepToIHMCMsg(step_list_[i], foot_data);
+        ihmc_msg.footstepDataList[i-current_step_index_-1] = foot_data;
     }
     return true;
 }
@@ -150,21 +118,23 @@ void IHMCFootstepServer::stepToIHMCMsg(const vigir_footstep_planning_msgs::Step&
 void IHMCFootstepServer::statusCB(const ihmc_msgs::FootstepStatusMessageConstPtr& status_ptr) {
     if (status_ptr->status == 1) {
         current_step_index_++;
-        // Check if target number of steps is reached
-        if (current_step_index_ == target_step_index_) {
-            setSucceeded("Reached goal pose.");
-        } else {
-            sendFeedback();
-        }
+       if (goalIsActive()) { // Check if goal was pre-empted.
+            // Check if target number of steps is reached
+            if (current_step_index_ == target_step_index_) {
+                setSucceeded("Reached goal pose.");
+            } else {
+                sendFeedback();
+            }
+       }
     }
 }
 
 void IHMCFootstepServer::sendFeedback() {
-    ROS_INFO_STREAM("Feedback: Current step index: " << current_step_index_);
+    ROS_INFO_STREAM("Feedback: Current step index: " << current_step_index_ << "/" << target_step_index_);
     vigir_footstep_planning_msgs::ExecuteStepPlanFeedback feedback;
     feedback.current_step_index = current_step_index_;
     feedback.stepping_status = vigir_footstep_planning_msgs::FootstepExecutionStatus::EXECUTING_STEP_PLAN;
-    server_.publishFeedback(feedback);
+    current_goal_.publishFeedback(feedback);
 }
 
 void IHMCFootstepServer::setSucceeded(std::string msg) {
@@ -172,7 +142,7 @@ void IHMCFootstepServer::setSucceeded(std::string msg) {
     vigir_footstep_planning_msgs::ExecuteStepPlanResult result;
     result.status.status = vigir_footstep_planning_msgs::FootstepExecutionStatus::REACHED_GOAL;
     result.status.header.stamp = ros::Time::now();
-    server_.setSucceeded(result, msg);
+    current_goal_.setSucceeded(result, msg);
 }
 
 void IHMCFootstepServer::setAborted(std::string msg) {
@@ -180,7 +150,15 @@ void IHMCFootstepServer::setAborted(std::string msg) {
     vigir_footstep_planning_msgs::ExecuteStepPlanResult result;
     result.status.status = vigir_footstep_planning_msgs::FootstepExecutionStatus::ERR_EMPTY_PLAN;
     result.status.header.stamp = ros::Time::now();
-    server_.setAborted(result, msg);
+    current_goal_.setAborted(result, msg);
+}
+
+void IHMCFootstepServer::preemptWithoutStop(std::string msg) {
+    ROS_INFO_STREAM("Preempt without stop.");
+    vigir_footstep_planning_msgs::ExecuteStepPlanResult result;
+    result.status.status = vigir_footstep_planning_msgs::FootstepExecutionStatus::PREMATURE_HALT;
+    result.status.header.stamp = ros::Time::now();
+    current_goal_.setCanceled(result, msg);
 }
 
 void IHMCFootstepServer::setPreempted(std::string msg) {
@@ -189,7 +167,7 @@ void IHMCFootstepServer::setPreempted(std::string msg) {
     vigir_footstep_planning_msgs::ExecuteStepPlanResult result;
     result.status.status = vigir_footstep_planning_msgs::FootstepExecutionStatus::PREMATURE_HALT;
     result.status.header.stamp = ros::Time::now();
-    server_.setPreempted(result);
+    current_goal_.setCanceled(result, msg);
 }
 
 void IHMCFootstepServer::sendStopMsg() {

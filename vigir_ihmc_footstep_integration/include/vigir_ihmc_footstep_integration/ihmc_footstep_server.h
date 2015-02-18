@@ -1,14 +1,24 @@
 #ifndef IHMC_FOOTSTEP_SERVER_H
 #define IHMC_FOOTSTEP_SERVER_H
 
+/* ROS */
 #include <ros/ros.h>
+
+/* ViGIR */
 #include <vigir_footstep_planning_msgs/ExecuteStepPlanAction.h>
+
+/* IHMC */
 #include <ihmc_msgs/FootstepDataListMessage.h>
 #include <ihmc_msgs/FootstepStatusMessage.h>
 #include <ihmc_msgs/PauseCommandMessage.h>
+
+/* Actionlib */
 #include <actionlib/server/simple_action_server.h>
+#include <actionlib/server/action_server.h>
 
 namespace ihmc_integration {
+
+typedef actionlib::ActionServer<vigir_footstep_planning_msgs::ExecuteStepPlanAction> FootstepServer;
 
 class IHMCFootstepServer {
 public:
@@ -17,22 +27,28 @@ public:
     bool loadConfig(const ros::NodeHandle& config_node);
     void start();
 private:
-    actionlib::SimpleActionServer<vigir_footstep_planning_msgs::ExecuteStepPlanAction> server_;
+    bool goalIsActive();
     void executeCB(const vigir_footstep_planning_msgs::ExecuteStepPlanGoalConstPtr& goal_ptr);
-    void goalCB();
-    void preemptCB();
+    void goalCB(FootstepServer::GoalHandle goal_handle);
+    void preemptCB(FootstepServer::GoalHandle goal_handle);
 
     void sendStepPlan(const vigir_footstep_planning_msgs::StepPlan& step_plan);
     void sendFeedback();
     void setSucceeded(std::string msg = "");
     void setAborted(std::string msg = "");
+    void preemptWithoutStop(std::string msg = "");
     void setPreempted(std::string msg = "");
 
-    bool stepPlanToIHMCMsg(const vigir_footstep_planning_msgs::StepPlan& step_plan, ihmc_msgs::FootstepDataListMessage& ihmc_msg);
+    bool stepListToIHMCMsg(ihmc_msgs::FootstepDataListMessage& ihmc_msg);
     void stepToIHMCMsg(const vigir_footstep_planning_msgs::Step& step, ihmc_msgs::FootstepDataMessage& foot_data);
     void sendStopMsg();
+    void sendStepList();
 
     void statusCB(const ihmc_msgs::FootstepStatusMessageConstPtr& status_ptr);
+
+    FootstepServer server_;
+    FootstepServer::GoalHandle current_goal_;
+    std::vector<vigir_footstep_planning_msgs::Step> step_list_;
 
     ros::NodeHandle node_;
     std::string name_;
@@ -59,9 +75,7 @@ private:
 /*
  * TODO:
  * 0. Add timeout if controller doesn't respond
- * 1. Stop current step plan (by receiving an empty step plan)
  * 2. Stitch two plans
- * 3. Add constants IHMC message
  */
 
 
