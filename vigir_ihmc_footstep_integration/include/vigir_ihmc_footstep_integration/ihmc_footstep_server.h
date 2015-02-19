@@ -39,10 +39,11 @@ private:
     void preemptWithoutStop(std::string msg = "");
     void setPreempted(std::string msg = "");
 
+    void printStepPlan(unsigned int from, unsigned int to);
+
     bool stepListToIHMCMsg(ihmc_msgs::FootstepDataListMessage& ihmc_msg);
     void stepToIHMCMsg(const vigir_footstep_planning_msgs::Step& step, ihmc_msgs::FootstepDataMessage& foot_data);
     void sendStopMsg();
-    void sendStepList();
 
     void statusCB(const ihmc_msgs::FootstepStatusMessageConstPtr& status_ptr);
 
