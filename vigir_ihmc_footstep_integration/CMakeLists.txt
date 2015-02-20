@@ -7,6 +7,7 @@ project(vigir_ihmc_footstep_integration)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
+  roscpp
   actionlib
   actionlib_msgs
   ihmc_msgs
@@ -93,7 +94,8 @@ set(SOURCES
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES vigir_ihmc_footstep_integration
-  CATKIN_DEPENDS 
+  CATKIN_DEPENDS
+    roscpp
     actionlib 
     actionlib_msgs
     ihmc_msgs 
@@ -127,6 +129,7 @@ add_executable(ihmc_footstep_node src/ihmc_footstep_node.cpp)
 ## as an example, message headers may need to be generated before nodes
 # add_dependencies(ihmc_footstep_server ${catkin_EXPORTED_TARGETS})
 # add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
+add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(ihmc_footstep_node
@@ -147,6 +150,16 @@ target_link_libraries(ihmc_footstep_node
 #   scripts/my_python_script
 #   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 # )
+
+install(TARGETS ${PROJECT_NAME}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(DIRECTORY launch
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+  FILES_MATCHING PATTERN "*.launch"
+)
 
 ## Mark executables and/or libraries for installation
 # install(TARGETS vigir_ihmc_footstep_integration vigir_ihmc_footstep_integration_node
