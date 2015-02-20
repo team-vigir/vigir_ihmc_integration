@@ -143,7 +143,10 @@ void IHMCFootstepServer::statusCB(const ihmc_msgs::FootstepStatusMessageConstPtr
 void IHMCFootstepServer::sendFeedback() {
     ROS_INFO_STREAM("Feedback: Current step index: " << current_step_index_ << "/" << target_step_index_);
     vigir_footstep_planning_msgs::ExecuteStepPlanFeedback feedback;
-    feedback.current_step_index = current_step_index_;
+    /// TODO
+    feedback.last_performed_step_index = current_step_index_;
+    //feedback.currently_executing_step_index = TODO;
+    feedback.first_changeable_step_index = current_step_index_+1;
     feedback.stepping_status = vigir_footstep_planning_msgs::FootstepExecutionStatus::EXECUTING_STEP_PLAN;
     current_goal_.publishFeedback(feedback);
 }
