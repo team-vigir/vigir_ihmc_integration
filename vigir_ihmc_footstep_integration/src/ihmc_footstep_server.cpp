@@ -97,7 +97,7 @@ bool IHMCFootstepServer::stepListToIHMCMsg(ihmc_msgs::FootstepDataListMessage& i
     ihmc_msg.footstepDataList.resize(step_list_.size()-1-current_step_index_);
     ihmc_msg.swingTime = swing_time_;
     ihmc_msg.transferTime = transfer_time_;
-    ihmc_msg.trajectoryWaypointGenerationMethod = traj_waypoint_gen_method_; // 0=Default, 1=BY_BOX, 2=STEP_ON_OR_OFF, 3=NO_STEP, 4=LOW_HEIGHT
+    //ihmc_msg.trajectoryWaypointGenerationMethod = traj_waypoint_gen_method_; // 0=Default, 1=BY_BOX, 2=STEP_ON_OR_OFF, 3=NO_STEP, 4=LOW_HEIGHT
 //    ihmc_msg.trajectoryBoxData --- only needed if generation is 'BY BOX' id=1
     for (unsigned int i = current_step_index_+1; i < step_list_.size(); i++) {
         ihmc_msgs::FootstepDataMessage foot_data;
