@@ -6,6 +6,6 @@ ihmc_footstep_config:
   traj_waypoint_gen_method: 0   # 0=Default, 1=BY_BOX, 2=STEP_ON_OR_OFF, 3=NO_STEP, 4=LOW_HEIGHT
   timeout_factor: 1.2           # factor on the step plan time until timeout
 
-  ihmc_pub_topic: "/atlas/inputs/ihmc_msgs/FootstepDataListMessage" # Topic on which step plan is published
-  ihmc_status_topic: "/atlas/outputs/ihmc_msgs/FootstepStatusMessage" # Topic on which status feedback is given
-  ihmc_stop_topic: "/atlas/inputs/ihmc_msgs/PauseCommandMessage" # Stops the current footstep plan in a safe state
+  ihmc_pub_topic: "/ihmc_ros/atlas/control/footstep_list" # Topic on which step plan is published
+  ihmc_status_topic: "/ihmc_ros/atlas/output/footstep_status" # Topic on which status feedback is given
+  ihmc_stop_topic: "/ihmc_ros/atlas/control/pause_footstep_exec" # Stops the current footstep plan in a safe state
