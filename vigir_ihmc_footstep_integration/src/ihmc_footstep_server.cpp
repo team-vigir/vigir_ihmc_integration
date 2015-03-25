@@ -94,15 +94,15 @@ bool IHMCFootstepServer::stepListToIHMCMsg(ihmc_msgs::FootstepDataListMessage& i
     if (step_list_.empty()) { // Need at least 1 step
         return false;
     }
-    ihmc_msg.footstepDataList.resize(step_list_.size()-1-current_step_index_);
-    ihmc_msg.swingTime = swing_time_;
-    ihmc_msg.transferTime = transfer_time_;
+    ihmc_msg.footstep_data_list.resize(step_list_.size()-1-current_step_index_);
+    ihmc_msg.swing_time = swing_time_;
+    ihmc_msg.transfer_time = transfer_time_;
     //ihmc_msg.trajectoryWaypointGenerationMethod = traj_waypoint_gen_method_; // 0=Default, 1=BY_BOX, 2=STEP_ON_OR_OFF, 3=NO_STEP, 4=LOW_HEIGHT
 //    ihmc_msg.trajectoryBoxData --- only needed if generation is 'BY BOX' id=1
     for (unsigned int i = current_step_index_+1; i < step_list_.size(); i++) {
         ihmc_msgs::FootstepDataMessage foot_data;
         stepToIHMCMsg(step_list_[i], foot_data);
-        ihmc_msg.footstepDataList[i-current_step_index_-1] = foot_data;
+        ihmc_msg.footstep_data_list[i-current_step_index_-1] = foot_data;
     }
     ROS_INFO_STREAM("Sent step plan from " << current_step_index_+1 << " to " << target_step_index_ << ".");
     printStepPlan(current_step_index_+1, step_list_.size());
@@ -110,7 +110,7 @@ bool IHMCFootstepServer::stepListToIHMCMsg(ihmc_msgs::FootstepDataListMessage& i
 }
 
 void IHMCFootstepServer::stepToIHMCMsg(const vigir_footstep_planning_msgs::Step& step, ihmc_msgs::FootstepDataMessage& foot_data) {
-    foot_data.robotSide = step.foot.foot_index;
+    foot_data.robot_side = step.foot.foot_index;
     foot_data.location.x = step.foot.pose.position.x;
     foot_data.location.y = step.foot.pose.position.y;
     foot_data.location.z = step.foot.pose.position.z;
