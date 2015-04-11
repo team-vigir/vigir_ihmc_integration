@@ -85,7 +85,7 @@ void IHMCFootstepServer::sendStepPlan(const vigir_footstep_planning_msgs::StepPl
     // copy new steps
     for (std::vector<vigir_footstep_planning_msgs::Step>::const_iterator itr = step_plan.steps.begin(); itr != step_plan.steps.end(); itr++) {
       vigir_footstep_planning_msgs::Step step = *itr;
-      foot_pose_transformer_->transformToPlannerFrame(step); // transform step to sole frame
+      //foot_pose_transformer_->transformToPlannerFrame(step); // transform step to sole frame
       step_list_[step.step_index] = step;
     }
 
