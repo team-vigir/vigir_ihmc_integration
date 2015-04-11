@@ -8,11 +8,11 @@ int main(int argc, char **argv) {
     ros::NodeHandle nh;
 
     std::string execute_topic = "ihmc_footstep_server";
-    if (!nh.getParam("ihmc_footstep_config/execute_topic", execute_topic))
+    if (!nh.getParam("execute_topic", execute_topic))
         ROS_WARN_STREAM("Couldn't find param 'execute_topic'. Using default: " << execute_topic << ".");
 
     std::string footstep_planner_ns = "/vigir/footstep_planning";
-    if (!nh.getParam("ihmc_footstep_config/footstep_planner_ns", footstep_planner_ns))
+    if (!nh.getParam("footstep_planner_ns", footstep_planner_ns))
         ROS_WARN_STREAM("Couldn't find param 'footstep_planner_ns'. Using default: " << footstep_planner_ns << ".");
 
     ihmc_integration::IHMCFootstepServer server(nh, execute_topic, footstep_planner_ns);
