@@ -1,6 +1,6 @@
 ihmc_footstep_config:
-  namespace: "/"
-  name: "ihmc_footstep_server"
+  execute_topic: "ihmc_footstep_server"
+  footstep_planner_ns: "/vigir/footstep_planning"
   swing_time: 1.5               # single-support time
   transfer_time: 1.5            # double-support time
   traj_waypoint_gen_method: 0   # 0=Default, 1=BY_BOX, 2=STEP_ON_OR_OFF, 3=NO_STEP, 4=LOW_HEIGHT

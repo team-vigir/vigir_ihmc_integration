@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   actionlib_msgs
   ihmc_msgs
   vigir_footstep_planning_msgs
+  vigir_foot_pose_transformer
 )
 
 ## System dependencies are found with CMake's conventions
@@ -96,10 +97,11 @@ catkin_package(
   LIBRARIES vigir_ihmc_footstep_integration
   CATKIN_DEPENDS
     roscpp
-    actionlib 
+    actionlib
     actionlib_msgs
-    ihmc_msgs 
+    ihmc_msgs
     vigir_footstep_planning_msgs
+    vigir_foot_pose_transformer
 #  DEPENDS system_lib
 )
 
@@ -117,25 +119,18 @@ include_directories(
 )
 
 ## Declare a cpp library
-add_library(${PROJECT_NAME}
-  ${HEADERS}
-  ${SOURCES}
-)
+add_library(${PROJECT_NAME} ${HEADERS} ${SOURCES})
 
 ## Declare a cpp executable
 add_executable(ihmc_footstep_node src/ihmc_footstep_node.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
-# add_dependencies(ihmc_footstep_server ${catkin_EXPORTED_TARGETS})
-# add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
 add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(ihmc_footstep_node
-   ${PROJECT_NAME}
-   ${catkin_LIBRARIES}
-)
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
+target_link_libraries(ihmc_footstep_node ${PROJECT_NAME})
 
 #############
 ## Install ##
