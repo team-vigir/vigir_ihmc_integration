@@ -146,7 +146,7 @@ target_link_libraries(ihmc_footstep_node ${PROJECT_NAME})
 #   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 # )
 
-install(TARGETS ${PROJECT_NAME}
+install(TARGETS ${PROJECT_NAME} ihmc_footstep_node
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
@@ -155,6 +155,12 @@ install(DIRECTORY launch
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
   FILES_MATCHING PATTERN "*.launch"
 )
+
+install(DIRECTORY config
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+  FILES_MATCHING PATTERN "*.yaml"
+)
+
 
 ## Mark executables and/or libraries for installation
 # install(TARGETS vigir_ihmc_footstep_integration vigir_ihmc_footstep_integration_node
