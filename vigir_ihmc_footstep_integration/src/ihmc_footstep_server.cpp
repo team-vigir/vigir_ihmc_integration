@@ -44,7 +44,7 @@ void IHMCFootstepServer::start() {
 
     server_.start();
 
-    ROS_INFO_STREAM("[IHMCFootstepServer] Server started.");
+    // ROS_INFO_STREAM("[IHMCFootstepServer] Server started.");
 }
 
 bool IHMCFootstepServer::goalIsActive() {
@@ -60,7 +60,6 @@ void IHMCFootstepServer::goalCB(FootstepServer::GoalHandle goal_handle) {
         current_step_index_ = 0;
         sendStepPlan(current_goal_.getGoal()->step_plan);
     } else {
-        //preemptWithoutStop("Append new goal");
         setPreempted("Merging with new goal.");
         int32_t ns = swing_time_ * 1000000000;
         ros::Duration d = ros::Duration(0, ns);
@@ -117,7 +116,6 @@ bool IHMCFootstepServer::stepListToIHMCMsg(ihmc_msgs::FootstepDataListMessage& i
     }
 
     ROS_INFO_STREAM("[IHMCFootstepServer] Sent step plan from " << current_step_index_+1 << " to " << target_step_index_ << ".");
-    printStepPlan(current_step_index_+1, step_list_.size());
     return true;
 }
 
@@ -153,7 +151,7 @@ void IHMCFootstepServer::statusCB(const ihmc_msgs::FootstepStatusMessageConstPtr
 }
 
 void IHMCFootstepServer::sendFeedback() {
-    ROS_INFO_STREAM("[IHMCFootstepServer] Feedback: Current step index: " << current_step_index_ << "/" << target_step_index_);
+    // ROS_INFO_STREAM("[IHMCFootstepServer] Feedback: Current step index: " << current_step_index_ << "/" << target_step_index_);
     vigir_footstep_planning_msgs::ExecuteStepPlanFeedback feedback;
     /// TODO
     feedback.last_performed_step_index = current_step_index_;
