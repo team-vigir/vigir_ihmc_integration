@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+
+<launch>
+  <group ns="trajectory_controllers">
+    
+    <rosparam command="load" file="$(find vigir_ihmc_control_integration)/config/arm_controllers.yaml" />
+    
+    <node name="left_arm_traj_controller" pkg="vigir_ihmc_control_integration" type="ihmc_arm_action_node" respawn="false" output="screen"/>
+    <node name="right_arm_traj_controller" pkg="vigir_ihmc_control_integration" type="ihmc_arm_action_node" respawn="false" output="screen"/>
+    
+    <!--Below nodes are just started so other parts of system do not wait for action servers for ages-->
+    <node name="torso_traj_controller" pkg="vigir_ihmc_control_integration" type="ihmc_arm_action_node" respawn="false" output="screen"/>
+    <node name="neck_traj_controller" pkg="vigir_ihmc_control_integration" type="ihmc_arm_action_node" respawn="false" output="screen"/>
+    <node name="left_leg_traj_controller" pkg="vigir_ihmc_control_integration" type="ihmc_arm_action_node" respawn="false" output="screen"/>
+    <node name="right_leg_traj_controller" pkg="vigir_ihmc_control_integration" type="ihmc_arm_action_node" respawn="false" output="screen"/>
+
+  </group>  
+</launch>

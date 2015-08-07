@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<package>
+  <name>vigir_ihmc_control_integration</name>
+  <version>0.0.0</version>
+  <description>The vigir_ihmc_control_integration package</description>
+
+  <author email="kohlbrecher@sim.tu-darmstadt.de">Stefan Kohlbrecher</author>
+
+  <maintainer email="kohlbrecher@sim.tu-darmstadt.de">Stefan Kohlbrecher</maintainer>
+
+  <license>BSD</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>actionlib</build_depend>
+  <build_depend>control_msgs</build_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>sensor_msgs</build_depend>
+  <build_depend>trajectory_msgs</build_depend>
+  <run_depend>actionlib</run_depend>
+  <run_depend>control_msgs</run_depend>
+  <run_depend>roscpp</run_depend>
+  <run_depend>sensor_msgs</run_depend>
+  <run_depend>trajectory_msgs</run_depend>
+
+  <export>
+  </export>
+  
+</package>
