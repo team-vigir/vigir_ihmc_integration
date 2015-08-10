@@ -81,6 +81,11 @@ void IhmcArmActionServer::reorderAndSend(const trajectory_msgs::JointTrajectory&
   ihmc_command_publisher_.publish(reordered_traj);
 }
 
+void IhmcArmActionServer::completionTimerCallback(const ros::TimerEvent& event)
+{
+  setSucceeded("Arm reached goal");
+}
+
 void IhmcArmActionServer::commandCb(const trajectory_msgs::JointTrajectoryConstPtr msg)
 {
   reorderAndSend(*msg);
@@ -93,6 +98,11 @@ bool IhmcArmActionServer::goalIsActive() {
 void IhmcArmActionServer::goalCB(FollowJointTrajectoryActionServer::GoalHandle goal_handle) {
   ROS_INFO_STREAM("[IhmcArmActionServer] New goal received.");
 
+  if (goal_handle.getGoal()->trajectory.points.empty()){
+    ROS_WARN("Received empty trajectory as goal!");
+    return;
+  }
+
   if (!goalIsActive()) {
     goal_handle.setAccepted();
     current_goal_ = goal_handle;
@@ -104,6 +114,12 @@ void IhmcArmActionServer::goalCB(FollowJointTrajectoryActionServer::GoalHandle g
     current_goal_ = goal_handle;
     reorderAndSend(goal_handle.getGoal()->trajectory);
   }
+
+
+  completion_timer_ = node_.createTimer(goal_handle.getGoal()->trajectory.points.back().time_from_start,
+                                        &IhmcArmActionServer::completionTimerCallback,
+                                        this,
+                                        true);
 }
 
 void IhmcArmActionServer::preemptCB(FollowJointTrajectoryActionServer::GoalHandle goal_handle) {

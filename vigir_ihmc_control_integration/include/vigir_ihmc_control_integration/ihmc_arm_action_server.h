@@ -64,6 +64,7 @@ public:
 
 private:
   void reorderAndSend(const trajectory_msgs::JointTrajectory& msg);
+  void completionTimerCallback(const ros::TimerEvent& event);
 
   void commandCb(const trajectory_msgs::JointTrajectoryConstPtr msg);
 
@@ -88,6 +89,7 @@ private:
   boost::shared_ptr<FollowJointTrajectoryActionServer> server_;
   ros::Subscriber command_sub_;
   ros::Publisher ihmc_command_publisher_;
+  ros::Timer completion_timer_;
 
   std::vector<std::string> joint_names_;
 
